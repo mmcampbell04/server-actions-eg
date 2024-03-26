@@ -1,7 +1,7 @@
 import "./global.css";
 
 export const metadata = {
-  title: "Next.js Forms Example",
+  title: "URL Shortener",
   description: "Example application with forms and Postgres.",
 };
 

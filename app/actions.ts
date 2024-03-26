@@ -1,74 +1,76 @@
 "use server";
 
+import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
-import postgres from "postgres";
 import { z } from "zod";
+import { customAlphabet, urlAlphabet } from "nanoid";
 
-let sql = postgres(process.env.DATABASE_URL || process.env.POSTGRES_URL!, {
-  ssl: "allow",
-});
+const shortCode = customAlphabet(urlAlphabet, 5)();
 
-// CREATE TABLE todos (
-//   id SERIAL PRIMARY KEY,
-//   text TEXT NOT NULL
-// );
-
-export async function createTodo(
+export async function shortenUrl(
   prevState: {
     message: string;
   },
-  formData: FormData,
+  formData: FormData
 ) {
   const schema = z.object({
-    todo: z.string().min(1),
+    long: z
+      .string()
+      .min(4, {
+        message: "The URL must be at least 4 characters long",
+      })
+      .max(100, { message: "The URL must be at most 100 characters long" }),
   });
+
   const parse = schema.safeParse({
-    todo: formData.get("todo"),
+    long: formData.get("url"),
   });
 
   if (!parse.success) {
-    return { message: "Failed to create todo" };
+    return { message: parse.error.issues[0].message };
   }
 
   const data = parse.data;
 
+  const newUrl = encodeURIComponent(data.long);
+
   try {
     await sql`
-      INSERT INTO todos (text)
-      VALUES (${data.todo})
+      INSERT INTO link (long, short)
+      VALUES (${newUrl}, ${shortCode})
     `;
 
     revalidatePath("/");
-    return { message: `Added todo ${data.todo}` };
+    return { message: `Shortened url: ${shortCode}` };
   } catch (e) {
-    return { message: "Failed to create todo" };
+    return { message: "Failed to shorten url" };
   }
 }
 
-export async function deleteTodo(
+export async function deleteUrl(
   prevState: {
     message: string;
   },
-  formData: FormData,
+  formData: FormData
 ) {
   const schema = z.object({
     id: z.string().min(1),
-    todo: z.string().min(1),
+    long: z.string().min(1),
   });
   const data = schema.parse({
     id: formData.get("id"),
-    todo: formData.get("todo"),
+    long: formData.get("url"),
   });
 
   try {
     await sql`
-      DELETE FROM todos
-      WHERE id = ${data.id};
+      DELETE FROM link
+      WHERE long = ${data.long};
     `;
 
     revalidatePath("/");
-    return { message: `Deleted todo ${data.todo}` };
+    return { message: `Deleted link ${data.long}` };
   } catch (e) {
-    return { message: "Failed to delete todo" };
+    return { message: "Failed to delete link" };
   }
 }

@@ -1,25 +1,18 @@
-import postgres from "postgres";
-
 import { AddForm } from "@/app/add-form";
-import { DeleteForm } from "@/app/delete-form";
-
-let sql = postgres(process.env.DATABASE_URL || process.env.POSTGRES_URL!, {
-  ssl: "allow",
-});
+import { sql } from "@vercel/postgres";
+import { Card } from "./Card";
 
 export default async function Home() {
-  let todos = await sql`SELECT * FROM todos`;
+  let data = await sql`SELECT * FROM link`;
+  const { rows: urls } = data;
 
   return (
     <main>
-      <h1 className="sr-only">Todos</h1>
+      <h1 className="sr-only">Url Shortener</h1>
       <AddForm />
       <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>
-            {todo.text}
-            <DeleteForm id={todo.id} todo={todo.text} />
-          </li>
+        {urls.map((url) => (
+          <Card key={url.id} url={url} />
         ))}
       </ul>
     </main>

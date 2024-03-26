@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { deleteTodo } from "@/app/actions";
+import { deleteUrl } from "@/app/actions";
 
 const initialState = {
   message: "",
@@ -17,13 +17,13 @@ function DeleteButton() {
   );
 }
 
-export function DeleteForm({ id, todo }: { id: number; todo: string }) {
-  const [state, formAction] = useFormState(deleteTodo, initialState);
+export function DeleteForm({ id, long }: { id: number; long: string }) {
+  const [state, formAction] = useFormState(deleteUrl, initialState);
 
   return (
     <form action={formAction}>
       <input type="hidden" name="id" value={id} />
-      <input type="hidden" name="todo" value={todo} />
+      <input type="hidden" name="url" value={long} />
       <DeleteButton />
       <p aria-live="polite" className="sr-only" role="status">
         {state?.message}
